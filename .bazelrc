@@ -1,0 +1,12 @@
+build:dbg --cxxopt=-std=c++14
+build:dbg --cxxopt=-Wall
+build:dbg --cxxopt=-Wextra
+build:dbg --cxxopt=-Wpedantic
+build:dbg --cxxopt=-fdiagnostics-color
+build:dbg --compilation_mode=dbg
+
+build --cxxopt=-std=c++14
+build --cxxopt=-Wall
+build --cxxopt=-Wextra
+build --cxxopt=-Wpedantic
+build --cxxopt=-fdiagnostics-color
