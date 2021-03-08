@@ -10,39 +10,36 @@ namespace {
 class SharedResource
 {
   public:
-    void AddValue(const std::string value)
+    void AddValueTenTimes(const int value)
     {
       lock_.Lock();
-      if (!result_.empty())
+      int counter{0};
+      while (counter < 10)
       {
-        result_.append(value);
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      if (result_.empty())
-      {
-        result_.append(value);
-      }
+        result_ += value;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        ++counter;
+      };
       lock_.Unlock();
     }
 
-    const std::string& GetResult() {return result_;}
+    int GetResult() { return result_;}
 
   private:
-    std::string result_{""};
+    int result_{0};
     utilities::Spinlock lock_{};
 };
 
 TEST(SpinLockSpec, GivenTwoWorkerThreads_LockSharedResource)
 {
-  std::string first{"first"};
-  std::string second{"second"};
+  int first_increment{5};
+  int second_increment{10};
   SharedResource sut;
-  std::thread first_worker{&SharedResource::AddValue, &sut, first};
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  std::thread second_worker{&SharedResource::AddValue, &sut, second};
+  std::thread first_worker{&SharedResource::AddValueTenTimes, &sut, first_increment};
+  std::thread second_worker{&SharedResource::AddValueTenTimes, &sut, second_increment};
 
   first_worker.join();
   second_worker.join();
-  EXPECT_EQ(first+second, sut.GetResult());
+  EXPECT_EQ(10*(first_increment+second_increment), sut.GetResult());
 }
 } // namespace anonymous

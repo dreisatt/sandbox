@@ -1,5 +1,4 @@
 #include "spin_lock.hpp"
-
 #include <immintrin.h>
 
 namespace utilities
