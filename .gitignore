@@ -1,0 +1,6 @@
+# Ignore IDE folders
+/.vscode
+.*.swp
+# Ignore bazel symlinks
+/bazel-*
+/.bazel
