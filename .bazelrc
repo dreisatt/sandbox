@@ -10,3 +10,6 @@ build --cxxopt=-Wall
 build --cxxopt=-Wextra
 build --cxxopt=-Wpedantic
 build --cxxopt=-fdiagnostics-color
+build --symlink_prefix=.bazel/
+
+run --symlink_prefix=.bazel/
