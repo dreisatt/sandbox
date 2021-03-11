@@ -1,0 +1,21 @@
+{
+  "name": "simple_web_server",
+  "version": "1.0.0",
+  "description": "Simple web server serving static content",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Nikolai Reischl <Nikolai.Reischl@richard-wolf.com>",
+  "license": "MIT",
+  "keywords": [
+    "server",
+    "http"
+  ],
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "http": "0.0.1-security",
+    "path": "^0.12.7",
+    "url": "^0.11.0"
+  }
+}

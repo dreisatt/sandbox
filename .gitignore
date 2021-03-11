@@ -4,3 +4,7 @@
 # Ignore bazel symlinks
 /bazel-*
 /.bazel
+# Ignore Node libraries
+node_modules/
+yarn.lock
+yarn-error.log
