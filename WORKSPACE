@@ -2,6 +2,9 @@ workspace(name="coding_sandbox")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+################
+# Dependencies #
+################
 new_local_repository(
    name = "GnuGsl",
    build_file = "third_party/GnuGsl.BUILD",
@@ -34,12 +37,12 @@ pip_repositories()
 load("@rules_python//python:pip.bzl", "pip_import")
 
 pip_import(
-    name = "py_deps",
+    name = "mandelbrot_deps",
     requirements = "//mandelbrot:requirements.txt",
 )
 
-load("@py_deps//:requirements.bzl", "pip_install")
+load("@mandelbrot_deps//:requirements.bzl", "pip_install")
 
 pip_install()
 
-register_toolchains("//mandelbrot:my_py_toolchain")
+register_toolchains("//bazel/python:python3_only_toolchain")
