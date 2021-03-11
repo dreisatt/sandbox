@@ -1,15 +1,30 @@
-build:dbg --cxxopt=-std=c++14
-build:dbg --cxxopt=-Wall
-build:dbg --cxxopt=-Wextra
-build:dbg --cxxopt=-Wpedantic
-build:dbg --cxxopt=-fdiagnostics-color
-build:dbg --compilation_mode=dbg
+build:base --symlink_prefix=.bazel/
 
-build --cxxopt=-std=c++14
-build --cxxopt=-Wall
-build --cxxopt=-Wextra
-build --cxxopt=-Wpedantic
-build --cxxopt=-fdiagnostics-color
-build --symlink_prefix=.bazel/
+build --config=base
 
+build:cpp_base --config=base
+build:cpp_base --cxxopt=-std=c++14
+build:cpp_base --cxxopt=-Wall
+build:cpp_base --cxxopt=-Wextra
+build:cpp_base --cxxopt=-Wpedantic
+build:cpp_base --cxxopt=-fdiagnostics-color
+
+build:cpp --config=cpp_base
+build:cpp --compilation_mode=opt
+
+build:cpp_dbg --config=cpp_base
+build:cpp_dbg --compilation_mode=dbg
+
+build:node --config=base
+
+run:cpp --symlink_prefix=.bazel/
+run:cpp_dbg --symlink_prefix=.bazel/
 run --symlink_prefix=.bazel/
+
+# Options: 'summary', ' errors', 'all' and 'streamed'
+test:cpp --test_output=summary
+
+test:cpp_dbg --test_output=streamed
+test:cpp_dbg --nocache_test_results
+
+coverage --instrument_test_targets
