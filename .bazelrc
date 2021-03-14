@@ -12,6 +12,9 @@ build:cpp_base --cxxopt=-fdiagnostics-color
 build:cpp --config=cpp_base
 build:cpp --compilation_mode=opt
 
+build:cpp_opt --config=cpp
+build:cpp_opt --cxxopt=-flto
+
 build:cpp_dbg --config=cpp_base
 build:cpp_dbg --compilation_mode=dbg
 
