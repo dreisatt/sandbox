@@ -1,0 +1,7 @@
+numpy
+matplotlib
+pillow
+pyparsing
+cycler
+kiwisolver
+python-dateutil

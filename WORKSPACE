@@ -62,8 +62,15 @@ pip_import(
     requirements = "//mandelbrot:requirements.txt",
 )
 
-load("@mandelbrot_deps//:requirements.bzl", "pip_install")
+pip_import(
+    name = "splines_deps",
+    requirements = "//splines:requirements.txt",
+)
 
+load("@mandelbrot_deps//:requirements.bzl", "pip_install")
+pip_install()
+
+load("@splines_deps//:requirements.bzl", "pip_install")
 pip_install()
 
 register_toolchains("//bazel/python:python3_only_toolchain")
