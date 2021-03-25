@@ -1,33 +1,38 @@
-// {
-//     "compilerOptions": {
-//       "target": "es5",
-//       "lib": [
-//         "dom",
-//         "dom.iterable",
-//         "esnext"
-//       ],
-//       "allowJs": true,
-//       "skipLibCheck": true,
-//       "esModuleInterop": true,
-//       "allowSyntheticDefaultImports": true,
-//       "strict": true,
-//       "forceConsistentCasingInFileNames": true,
-//       "module": "esnext",
-//       "moduleResolution": "node",
-//     //   "resolveJsonModule": true,
-//     //   "isolatedModules": true,
-//       "noEmit": true,
-//       "jsx": "react"
-//     },
-//     "include": [
-//       "src"
-//     ]
-//   }
 {
     "compilerOptions": {
-      "target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
-      "module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
-      "strict": true,                           /* Enable all strict type-checking options. */
-      "esModuleInterop": true                   /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
-    }
+      "target": "es5",
+      "lib": [
+        "dom",
+        "es5",
+        "es2015.collection",
+        "es2015.iterable",
+        "es2015.promise"
+      ],
+      "rootDir": ".",
+      "experimentalDecorators": true,
+      "types": [],
+    //   "allowJs": true,
+    //   "skipLibCheck": true,
+    //   "esModuleInterop": true,
+    //   "allowSyntheticDefaultImports": true,
+      // "strict": true,
+    //   "forceConsistentCasingInFileNames": true,
+    //   "module": "esnext",
+    //   "moduleResolution": "node",
+    //   "resolveJsonModule": true,
+    //   "isolatedModules": true,
+    //   "noEmit": true,
+      // "jsx": "react"
+    },
+    // "include": [
+    //   "src"
+    // ]
   }
+// {
+//     "compilerOptions": {
+//       "target": "es5",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
+//       "module": "commonjs",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+//       "strict": true,                           /* Enable all strict type-checking options. */
+//       "esModuleInterop": true                   /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
+//     }
+//   }

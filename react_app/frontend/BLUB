@@ -1,0 +1,19 @@
+package(default_visibility = ["//visibility:public"])
+load("@react_npm//@bazel/typescript:index.bzl", "ts_library")
+
+ts_library(
+    name = "main",
+    srcs = [
+        "main.tsx",
+        "app.tsx",
+    ],
+    tsconfig = ":tsconfig.json",
+    deps = [
+        "//react_app/frontend/friend:src",
+        "//react_app/model",
+        "@react_npm//react",
+        "@react_npm//react-dom",
+        "@react_npm//@types/react",
+        "@react_npm//@types/react-dom",
+    ]
+)

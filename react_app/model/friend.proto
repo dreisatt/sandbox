@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message Friend {
+  string name = 1;
+  int32 id = 2;
+}
+
+message Friends {
+  repeated Friend friends = 1;
+}

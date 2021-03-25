@@ -1,0 +1,1 @@
+export {Friend, Friends} from 'coding_sandbox/react_app/model/friend_pb';

@@ -57,7 +57,7 @@ function requestHandler(request, response)
 
     fs.stat(filename, contentHandler);
 }
-let port = 8081
+let port = 8080
 const server = http.createServer(requestHandler);
 server.listen(port);
 console.log("Server listening on port " + port)
