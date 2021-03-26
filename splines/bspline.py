@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def FindSpan(degree, knot, knot_vector):
+def findSpan(degree, knot, knot_vector):
     n = len(knot_vector)-degree-1
     if knot == knot_vector[n+1]:
         return n
@@ -34,7 +34,7 @@ if (clamped):
     for i in range(degree):
         np.append(knots, 1.0)
 
-i = FindSpan(2, 2.5, [0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5])
+i = findSpan(2, 2.5, [0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5])
 print("Index: " + str(i))
 
 # Visualization

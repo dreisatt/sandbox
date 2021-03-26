@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from sympy import *
 import numpy as np
 import scipy.linalg as l
@@ -7,7 +5,7 @@ import pylab as p
 
 import re
 
-def replace_pow(m):                                                                  
+def replace_pow(m):
     return 'std::pow(t,' + m.group(1) + ')'
 
 t = symbols('t')
@@ -29,11 +27,10 @@ def gen_polynomial_yaw(degree):
 		Y.append(y**i)
 		U.append(symbols('u'+str(i)))
 	return Matrix(Y), Matrix(U)
-	
 
 def print_matrix_line(pol, t_val):
 	for v in pol.subs({t:t_val}).jacobian(C):
-		print str(v) + ',',
+		print(str(v) + ',')
 	print
 
 T,C = gen_polynomial(12)
@@ -100,9 +97,9 @@ polynome = poly(F[0])
 polynome1 = poly(F1[0])
 
 if polynome == polynome1:
-    print 'polynome == polynome1'
+    print('polynome == polynome1')
 else:
-    print 'polynome != polynome1'
+    print('polynome != polynome1')
 
 points = [1.0, 9.0, 8.0, 3.0, 5.0, 3.0]
 time = [0.0, 0.2, 0.4, 0.6, 0.8, 2]
@@ -248,7 +245,7 @@ np.savetxt('res_py.txt', res)
 
 coeffs = res[0:12*(n-1)]
 
-print 'coeffs', coeffs
+print('coeffs', coeffs)
 
 #coeffs = np.loadtxt('coeffs_cpp.txt')
 #print 'coeffs', coeffs
@@ -265,12 +262,12 @@ for i in range(n-1):
     idx = np.logical_and(t >= time[i], t <= time[i+1])
     res[idx] = np.dot(T[idx], coeffs[12*i:12*(i+1)])
     coeffs_d2 = J_d2 * coeffs[12*i:12*(i+1)]
-    print 'coeffs', coeffs
-    print 'coeffs_d2', coeffs_d2
+    print('coeffs', coeffs)
+    print('coeffs_d2', coeffs_d2)
     res_d2[idx] = np.dot(T[idx], coeffs_d2)
     
 work = np.sum((res_d2 + 9.8)**2)
-print 'work', work
+print('work', work)
 
 
 
