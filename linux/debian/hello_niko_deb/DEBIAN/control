@@ -1,0 +1,10 @@
+Package: helloNiko
+Version: 0.1
+Architecture: amd64
+Maintainer: dreisatt
+Installed-Size: 6
+Depends: gcc, libc6,libstdc++6
+Section: testing
+Priority: optional
+Homepage: http://askubuntu.com
+Description: Simple debian package containing a hello-world executable. For testing and demonstration.
