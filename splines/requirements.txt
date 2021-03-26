@@ -1,0 +1,9 @@
+numpy
+matplotlib
+pyparsing
+cycler
+kiwisolver
+python-dateutil
+scipy
+sympy
+mpmath
