@@ -7,3 +7,4 @@ python-dateutil
 scipy
 sympy
 mpmath
+multipledispatch

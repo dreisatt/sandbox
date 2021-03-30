@@ -1,192 +1,210 @@
 import numpy as np
-from scipy import interpolate
-import random as rd
+import math
+from multipledispatch import dispatch
 import matplotlib.pyplot as plt
 
-def sciCubicSpline(x, y, order):
-    coeff = interpolate.splrep(x,y,k=order)
-    return coeff
+class CubicPolynomial:
+    def __init__(self, c0=0.0, c1=0.0, c2=0.0, c3=0.0, shift=0.0):
+        self.c0 = c0
+        self.c1 = c1
+        self.c2 = c2
+        self.c3 = c3
+        self.shift = shift
 
-def fitCubicPolynomialWithMoments(points):
-    # Number of points
-    n = len(points)
-    # Compute moments
-    TriDiaMatrix = np.zeros(shape=(n,n), dtype=float)
-    d = np.zeros(shape=(n,1), dtype=float)
-    # Create moment matrix
-    for i in range(0,n):
-        # Check for end point conditions
-        if(i == 0 or i == n-1):
-            # Natural spline conditions
-            TriDiaMatrix[i][i] = 2
-            d[i][0] = 0
+    @dispatch(float)
+    def evaluate(self, t):
+        delta = t-self.shift
+        return self.c0 + delta*(self.c1 + delta*(self.c2 + self.c3*delta))
+
+    @dispatch(np.ndarray)
+    def evaluate(self, times):
+        return [self.evaluate(t) for t in times]
+
+    def evaluateFirstDerivative(self, t):
+        delta = t-self.shift
+        return self.c1 + delta*(2.0*self.c2 + 3.0*self.c3*delta)
+
+    def evaluateSecondDerivative(self, t):
+        return 2.0*self.c2 + 6.0*self.c3*(t-self.shift)
+
+def segmentTimes(waypoints, total_time):
+    dist = []
+    for i in range(waypoints.shape[0]-1):
+        dist.append(np.linalg.norm(waypoints[i]-waypoints[i+1]))
+    total_dist = sum(dist)
+    return [item*total_time/total_dist for item in dist]
+
+class CubicSpline:
+    def __init__(self, durations=[], control_points=None):
+        self.durations = durations
+        # TODO::Niko: Rename to segment_number
+        self.segments = len(durations)-1
+        self.polynomials = []
+        if control_points == None:
+            self.control_points = []
         else:
-            h_i = points[i][0] - points[i-1][0]
-            h_i_1 = points[i+1][0] - points[i][0]
-            lambda_i = h_i_1/(h_i+h_i_1)
-            mi_i = 1-lambda_i
-            d_i = 6/(h_i+h_i_1)*((points[i+1][1]-points[i][1])/h_i_1 - (points[i][1]-points[i-1][1])/h_i)
-            TriDiaMatrix[i][i-1] = mi_i
-            TriDiaMatrix[i][i] = 2
-            TriDiaMatrix[i][i+1] = lambda_i
-            d[i][0] = d_i
-#    print(TriDiaMatrix)
-#    print(d)
-    moments = np.linalg.solve(TriDiaMatrix, d)
-#    print(moments)
-    coefficients = []
-    for i in range(0,n-1):
-        a = points[i][1]
-        h_i = (points[i+1][0]-points[i][0])
-        b = (points[i+1][1]-points[i][1])/h_i - (2*moments[i]+moments[i+1])*h_i/6
-        c = moments[i]/2
-        d = (moments[i+1]-moments[i])/(6*h_i)
-        coeff = np.array([a, b, c, d, points[i][0]])
-        coefficients.append(coeff)
-    return coefficients
+            self.control_points = control_points
+            self._computeSplineCoefficient()
+        self.segment = 0
 
-def fitCubicPolynomial(points):
-    # Number of polynomials
-    n = len(points)-1
-    print(n)
-    A = np.zeros(shape=(4*n, 4*n), dtype=float)
-    b = np.zeros(shape=(4*n, 1), dtype=float)
+    def getSegments(self):
+        return self.segments
 
-    # Iterate polynomial segments and add conditions to matrix
-    for i in range(0, n):
-        # Start point condition for polynomial segment
-        A[i*4][i*4] = 1
-        A[i*4][i*4+1] = points[i][0]-points[i][0]
-        A[i*4][i*4+2] = (points[i][0]-points[i][0])**2
-        A[i*4][i*4+3] = (points[i][0]-points[i][0])**3
-        b[i*4] = points[i][1]
+    def addControlPoints(self, control_points):
+        self.control_points = control_points
+        self._computeSplineCoefficient()
 
-        # End point condition for polynomial segment
-        A[i*4+1][i*4] = 1
-        A[i*4+1][i*4+1] = points[i+1][0]-points[i][0]
-        A[i*4+1][i*4+2] = (points[i+1][0]-points[i][0])**2
-        A[i*4+1][i*4+3] = (points[i+1][0]-points[i][0])**3
-        b[i*4+1] = points[i+1][1]
+    @dispatch(float)
+    def evaluate(self, t):
+        # TODO::Niko: Implement binary search or something mapping from t to segment
+        if t > duration[self.segment+1]:
+            self.segment = self.segment + 1
+        return self.polynomials[self.segment].evaluate(t)
 
-        if(i == 0):
-            continue
-
-        # First derivative condition (left hand side)
-        A[i*4+2][(i-1)*4] = 0
-        A[i*4+2][(i-1)*4+1] = 1
-        A[i*4+2][(i-1)*4+2] = 2*(points[i][0]-points[i-1][0])
-        A[i*4+2][(i-1)*4+3] = 3*(points[i][0]-points[i-1][0])**2
-        # First derivative condition (right hand side)
-        A[i*4+2][i*4] = 0
-        A[i*4+2][i*4+1] = -1
-        A[i*4+2][i*4+2] = -2*(points[i][0]-points[i][0])
-        A[i*4+2][i*4+3] = -3*(points[i][0]-points[i][0])**2
-        # Second derivative condition (left hand side)
-        A[i*4+3][(i-1)*4] = 0
-        A[i*4+3][(i-1)*4+1] = 0
-        A[i*4+3][(i-1)*4+2] = 2
-        A[i*4+3][(i-1)*4+3] = 6*(points[i][0]-points[i-1][0])
-        # Second derivative condition (right hand side)
-        A[i*4+3][i*4] = 0
-        A[i*4+3][i*4+1] = 0
-        A[i*4+3][i*4+2] = -2
-        A[i*4+3][i*4+3] = -6*(points[i][0]-points[i][0])
-    # Additional conditions on start and end segment
-    A[2][2] = 2
-    A[2][3] = 6*(points[0][0]-points[0][0])
-    A[3][(n-1)*4+2] = 2
-    A[3][(n-1)*4+3] = 6*(points[n][0]-points[n-1][0])
-    print(A)
-    print(b)
-#    print(A.shape)
-    x = np.linalg.solve(A, b)
-#    print(x)
-    coeff = x.reshape(n,4)
-    return coeff
-
-def cubicPolynomial(x, shift, coeff):
-    return coeff[0] + coeff[1]*(x-shift) + coeff[2]*(x-shift)**2 + coeff[3]*(x-shift)**3
-
-def cubicPolyFirstDerivative(x, shift, coeff):
-    return coeff[1] + 2*coeff[2]*(x-shift) + 3*coeff[3]*(x-shift)**2
-
-def cubicPolySecondDerivative(x, shift, coeff):
-    return 2*coeff[2] + 6*coeff[3]*(x-shift)
-
-def computeSplinePoints(x_points, control_points, spline_coeffients):
-    result = []
-    control_counter = 1
-    for i in range(0, len(x_points)):
-        if(x_points[i] < control_points[control_counter][0]):
-            result.append(cubicPolynomial(x_points[i], control_points[control_counter-1][0], spline_coeffients[control_counter-1]))
+    @dispatch(int)
+    def evaluate(self, segment):
+        if segment <= self.segments:
+            times = np.linspace(self.durations[segment], self.durations[segment+1], 100)
+            return times, self.polynomials[segment].evaluate(times)
         else:
-            if(control_counter < len(control_points)-1):
-                control_counter = control_counter+1
-            result.append(cubicPolynomial(x_points[i], control_points[control_counter-1][0], spline_coeffients[control_counter-1]))
-    return result
+            raise ValueError("Invalid segment id: ", segment)
 
+    def _computeSplineCoefficient(self):
+        A = np.zeros((4*self.segments, 4*self.segments))
+        b = np.zeros((4*self.segments, 1))
 
-if __name__ == "__main__":
-    c_x = [1.0, 3.0, 4.0, 5.0, 6.0]
-    c_y = [1.0, 1.0, 0.25, 0.2, 1.0/6.0]
-    sci_coeffients = sciCubicSpline(c_x, c_y, 3)
-    #print(sci_coeffients)
-    # Control point array (y=f(x)=1/x)
-    c0 = np.array([1.0, 1.0])
-    c1 = np.array([2.0, 3.0])
-    c2 = np.array([3.0, 2.25])
-    c3 = np.array([5.0, 0.2])
-    c4 = np.array([6.0, 1.0/6.0])
-    control_points = [c0, c1, c2, c3, c4]
-    new_spline = fitCubicPolynomialWithMoments(control_points)
-    # Compute polynomial coeffients
-    spline_coeffients = fitCubicPolynomial(control_points)
-    # Compute interpolation values
-    x_values = np.linspace(control_points[0][0], control_points[len(control_points)-1][0], num=10000)
-    control_counter = 1
-    result = []
-    for i in range(0, x_values.size):
-        if(x_values[i] < control_points[control_counter][0]):
-            result.append(cubicPolynomial(x_values[i], control_points[control_counter-1][0], spline_coeffients[control_counter-1]))
+        A[2][1] = 1.0
+        A[3][(self.segments-1)*4+1] = 1.0
+        delta = self.durations[-1]-self.durations[-2]
+        A[3][(self.segments-1)*4+2] = 2.0*delta
+        A[3][(self.segments-1)*4+3] = 3.0*delta*delta
+        for i in range(self.segments):
+            A[4*i][4*i] = 1.0
+            b[4*i] = self.control_points[i]
+
+            A[4*i+1][4*i] = 1.0
+            delta = self.durations[i+1]-self.durations[i]
+            A[4*i+1][4*i+1] = delta
+            A[4*i+1][4*i+2] = delta*delta
+            A[4*i+1][4*i+3] = A[4*i+1][4*i+2] * delta
+            b[4*i+1] = self.control_points[i+1]
+
+            if i == 0:
+                continue
+
+            A[i*4+2][(i-1)*4] = 0.0
+            A[i*4+2][(i-1)*4+1] = 1.0
+            delta = self.durations[i]-self.durations[i-1]
+            A[i*4+2][(i-1)*4+2] = 2.0*delta
+            A[i*4+2][(i-1)*4+3] = 3.0*delta*delta
+            # First derivative condition (right hand side)
+            A[i*4+2][i*4+1] = -1.0
+            # Second derivative condition (left hand side)
+            A[i*4+3][(i-1)*4+2] = 2.0
+            A[i*4+3][(i-1)*4+3] = 6.0*delta
+            # Second derivative condition (right hand side)
+            A[i*4+3][i*4+2] = -2.0
+        x = np.linalg.solve(A, b)
+        x = x.reshape(self.segments, 4)
+        for i in range(segments):
+            self.polynomials.append(CubicPolynomial(x[i][0], x[i][1], x[i][2], x[i][3], self.durations[i]))
+
+class CubicSpline2D:
+    def __init__(self, t_start, t_end):
+        self.control_points = []
+        self.t_start = t_start
+        self.t_end = t_end
+
+    def addControlPoints(self, control_points):
+        self.control_points = control_points
+        durations = self._computeSegmentDuration(self.t_start, self.t_end)
+        x = []
+        y = []
+        for point in control_points:
+            x.append(point[0])
+            y.append(point[1])
+        self.xSpline = CubicSpline(durations)
+        self.ySpline = CubicSpline(durations)
+        self.xSpline.addControlPoints(x)
+        self.ySpline.addControlPoints(y)
+
+    def _computeSegmentDuration(self, t_start, t_end):
+        total_time = t_end-t_start
+        dist = []
+        for i in range(len(self.control_points)-1):
+            dist.append(self._computeNorm(self.control_points[i], self.control_points[i+1]))
+        total_dist = sum(dist)
+        segment_durations = [item*total_time/total_dist for item in dist]
+        durations = [t_start]
+        for segment_duration in segment_durations:
+            durations.append(durations[-1] + segment_duration)
+        return durations
+
+    def _computeNorm(self, first, second):
+        x_dist = first[0] - second[0]
+        y_dist = first[1] - second[1]
+        return math.sqrt(x_dist*x_dist + y_dist*y_dist)
+
+    def evaluate(self, segment):
+        tx, x = self.xSpline.evaluate(segment)
+        ty, y = self.ySpline.evaluate(segment)
+        return x, y
+
+    def getNumberOfSegments(self):
+        return self.xSpline.getSegments()
+
+if __name__=='__main__':
+    t_start = 0.0
+    t_end = 1.0
+    x_input = [3.0, 5.0, 2.0, 6.0, 8.0, 10.0]
+    y_input = [1.0, 4.0, 6.25, 0.0, 2.0, -5.0]
+
+    waypoints = np.empty((len(x_input), 2))
+    for i in range(len(x_input)):
+        waypoints[i][0] = x_input[i]
+        waypoints[i][1] = y_input[i]
+    segments = len(x_input)-1
+    segment_durations = segmentTimes(waypoints, t_end-t_start)
+
+    duration = [t_start]
+    for segment_time in segment_durations:
+        duration.append(duration[-1] + segment_time)
+
+    x_spline = CubicSpline(duration)
+    y_spline = CubicSpline(duration)
+    x_spline.addControlPoints(x_input)
+    y_spline.addControlPoints(y_input)
+    x_values = []
+    y_values = []
+    t = None
+    for i in range(x_spline.getSegments()):
+        tsx, x_segment = x_spline.evaluate(i)
+        tsy, y_segment = y_spline.evaluate(i)
+        x_values.extend(x_segment)
+        y_values.extend(y_segment)
+        if t is None:
+            t = tsx
         else:
-            if(control_counter < len(control_points)-1):
-                control_counter = control_counter+1
-            result.append(cubicPolynomial(x_values[i], control_points[control_counter-1][0], spline_coeffients[control_counter-1]))
-    new_result = []
-    control_counter = 1
-    for i in range(0, x_values.size):
-        if(x_values[i] < control_points[control_counter][0]):
-            new_result.append(cubicPolynomial(x_values[i], new_spline[control_counter-1][4], new_spline[control_counter-1]))
-        else:
-            if(control_counter < len(control_points)-1):
-                control_counter = control_counter+1
-            new_result.append(cubicPolynomial(x_values[i], new_spline[control_counter-1][4], new_spline[control_counter-1]))
-    # Compare results
-    #sciResult = []
-    #for x in x_values:
-    #    sciResult.append(interpolate.splev(x, sci_coeffients))
-    #x_points = [1.5117349624633789,
-    #2.0380945205688477,
-    #2.5683050155639648,
-    #3.0485596656799316,
-    #3.4642939567565918,
-    #3.890139102935791,
-    #4.3982338905334473,
-    #4.9317374229431152,
-    #5.466315746307373]
-    #y_points = []
-    #control_counter = 1
-    #for i in range(0, len(x_points)):
-    #    if(x_points[i] < control_points[control_counter][0]):
-    #        y_points.append(cubicPolynomial(x_points[i], control_points[control_counter-1][0], spline_coeffients[control_counter-1]))
-    #    else:
-    #        if(control_counter < len(control_points)-1):
-    #            control_counter = control_counter+1
-    #        y_points.append(cubicPolynomial(x_points[i], control_points[control_counter-1][0], spline_coeffients[control_counter-1]))
-    # Plot interpolation
-    plt.plot(x_values, result, 'r')
-    for point in control_points:
-        plt.plot(point[0], point[1], 'x')
-    plt.plot(x_values, new_result, 'g')
-    #plt.plot(x_points, y_points, 'o')
+            t = np.concatenate([t, tsx])
+    plt.figure()
+    plt.plot(t, x_values)
+    plt.plot(t, y_values)
+    plt.plot(duration, y_input, 'x')
+    plt.plot(duration, x_input, 'o')
+    plt.show(block=False)
+
+    spline = CubicSpline2D(t_start, t_end)
+    spline.addControlPoints([[3.0, 1.0], [5.0, 4.0], [2.0, 6.25], [6.0, 0.0], [8.0, 2.0], [10.0, -5.0]])
+
+    x = []
+    y = []
+    for i in range(spline.getNumberOfSegments()):
+        x_segment_values, y_segment_values = spline.evaluate(i)
+        x.extend(x_segment_values)
+        y.extend(y_segment_values)
+    plt.figure()
+    plt.plot(x, y)
+    plt.plot(x_input, y_input, 'x')
+    plt.show(block=False)
+
     plt.show()
