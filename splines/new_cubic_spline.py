@@ -36,6 +36,7 @@ def segmentTimes(waypoints, total_time):
 class CubicSpline:
     def __init__(self, durations=[], control_points=None):
         self.durations = durations
+        # TODO::Niko: Rename to segment_number
         self.segments = len(durations)-1
         self.polynomials = []
         if control_points == None:
@@ -49,13 +50,20 @@ class CubicSpline:
         self.control_points = control_points
         self._computeSplineCoefficient()
 
+    @dispatch(float)
     def evaluate(self, t):
-        if t <= duration[self.segment+1]:
-            return self.polynomials[self.segment-1].evaluate(t)
+        # TODO::Niko: Implement binary search or something mapping from t to segment
+        if t > duration[self.segment+1]:
+            self.segment = self.segment + 1
+        return self.polynomials[self.segment].evaluate(t)
+
+    @dispatch(int)
+    def evaluate(self, segment):
+        if segment <= self.segments:
+            times = np.linspace(self.durations[segment], self.durations[segment+1], 100)
+            return times, self.polynomials[segment].evaluate(times)
         else:
-            # TODO::Niko: Implement binary search
-            CubicSpline.i = CubicSpline.i + 1
-            return self.polynomials[CubicSpline.i-1].evaluate(t)
+            raise ValueError("Invalid segment id: ", segment)
 
     def _computeSplineCoefficient(self):
         A = np.zeros((4*self.segments, 4*self.segments))
@@ -95,7 +103,7 @@ class CubicSpline:
         x = np.linalg.solve(A, b)
         x = x.reshape(self.segments, 4)
         for i in range(segments):
-            self.polynomials.append(CubicPolynomial(x[i][0], x[i][1], x[i][2], x[i][3], self.duration[i]))
+            self.polynomials.append(CubicPolynomial(x[i][0], x[i][1], x[i][2], x[i][3], self.durations[i]))
 
 class CubicSpline2D:
     def __init__(self, t_start, t_end):
@@ -125,9 +133,9 @@ class CubicSpline2D:
             durations.append(duration[-1] + segment_duration)
         return durations
 
-    def evaluate(self, t):
-        x = self.xSpline.evaluate(t)
-        y = self.ySpline.evaluate(t)
+    def evaluate(self, segment):
+        x = self.xSpline.evaluate(segment)
+        y = self.ySpline.evaluate(segment)
         return x,y
 
 t_start = 0.0
@@ -254,4 +262,19 @@ plt.plot(x_spline, y_spline)
 plt.plot(x_input, y_input, 'x')
 plt.show(block=False)
 
+test_x_spline = CubicSpline(duration)
+test_y_spline = CubicSpline(duration)
+test_x_spline.addControlPoints(x_input)
+test_y_spline.addControlPoints(y_input)
+test_x_values = []
+test_y_values = []
+for i in range(segments):
+    tsx, xvalues = test_x_spline.evaluate(i)
+    tsy, yvalues = test_y_spline.evaluate(i)
+    test_x_values.extend(xvalues)
+    test_y_values.extend(yvalues)
+plt.figure()
+plt.plot(test_x_values, test_y_values)
+plt.plot(x_input, y_input, 'x')
+plt.show(block=False)
 plt.show()
