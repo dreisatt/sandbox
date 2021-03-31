@@ -3,6 +3,7 @@ import math
 from multipledispatch import dispatch
 import matplotlib.pyplot as plt
 
+# p0(t) = c0 + c1*(t-t0) + c2*(t-t0)^2  + c3*(t-t0)^3
 class CubicPolynomial:
     def __init__(self, c0=0.0, c1=0.0, c2=0.0, c3=0.0, shift=0.0):
         self.c0 = c0
@@ -37,8 +38,7 @@ def segmentTimes(waypoints, total_time):
 class CubicSpline:
     def __init__(self, durations=[], control_points=None):
         self.durations = durations
-        # TODO::Niko: Rename to segment_number
-        self.segments = len(durations)-1
+        self.number_segments = len(durations)-1
         self.polynomials = []
         if control_points == None:
             self.control_points = []
@@ -48,7 +48,7 @@ class CubicSpline:
         self.segment = 0
 
     def getSegments(self):
-        return self.segments
+        return self.number_segments
 
     def addControlPoints(self, control_points):
         self.control_points = control_points
@@ -63,25 +63,27 @@ class CubicSpline:
 
     @dispatch(int)
     def evaluate(self, segment):
-        if segment <= self.segments:
+        if segment <= self.number_segments:
             times = np.linspace(self.durations[segment], self.durations[segment+1], 100)
             return times, self.polynomials[segment].evaluate(times)
         else:
             raise ValueError("Invalid segment id: ", segment)
 
     def _computeSplineCoefficient(self):
-        A = np.zeros((4*self.segments, 4*self.segments))
-        b = np.zeros((4*self.segments, 1))
-
+        A = np.zeros((4*self.number_segments, 4*self.number_segments))
+        b = np.zeros((4*self.number_segments, 1))
+        # First derivative equals zero at start and end of spline
         A[2][1] = 1.0
-        A[3][(self.segments-1)*4+1] = 1.0
+        A[3][(self.number_segments-1)*4+1] = 1.0
         delta = self.durations[-1]-self.durations[-2]
-        A[3][(self.segments-1)*4+2] = 2.0*delta
-        A[3][(self.segments-1)*4+3] = 3.0*delta*delta
-        for i in range(self.segments):
+        A[3][(self.number_segments-1)*4+2] = 2.0*delta
+        A[3][(self.number_segments-1)*4+3] = 3.0*delta*delta
+        for i in range(self.number_segments):
+            # Start of segment equals to boundary condition
             A[4*i][4*i] = 1.0
             b[4*i] = self.control_points[i]
 
+            # End of segment equals to boundary condition
             A[4*i+1][4*i] = 1.0
             delta = self.durations[i+1]-self.durations[i]
             A[4*i+1][4*i+1] = delta
@@ -91,7 +93,7 @@ class CubicSpline:
 
             if i == 0:
                 continue
-
+            # First derivative condition (left hand side)
             A[i*4+2][(i-1)*4] = 0.0
             A[i*4+2][(i-1)*4+1] = 1.0
             delta = self.durations[i]-self.durations[i-1]
@@ -105,7 +107,7 @@ class CubicSpline:
             # Second derivative condition (right hand side)
             A[i*4+3][i*4+2] = -2.0
         x = np.linalg.solve(A, b)
-        x = x.reshape(self.segments, 4)
+        x = x.reshape(self.number_segments, 4)
         for i in range(segments):
             self.polynomials.append(CubicPolynomial(x[i][0], x[i][1], x[i][2], x[i][3], self.durations[i]))
 
@@ -134,6 +136,7 @@ class CubicSpline2D:
         for i in range(len(self.control_points)-1):
             dist.append(self._computeNorm(self.control_points[i], self.control_points[i+1]))
         total_dist = sum(dist)
+        # Normalize distance w.r.t. the total distance and time
         segment_durations = [item*total_time/total_dist for item in dist]
         durations = [t_start]
         for segment_duration in segment_durations:
