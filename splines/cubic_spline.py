@@ -113,13 +113,11 @@ class CubicSpline:
 
 class CubicSpline2D:
     def __init__(self, t_start, t_end):
-        self.control_points = []
         self.t_start = t_start
         self.t_end = t_end
 
     def addControlPoints(self, control_points):
-        self.control_points = control_points
-        durations = self._computeSegmentDuration(self.t_start, self.t_end)
+        durations = self._computeSegmentDuration(control_points)
         x = []
         y = []
         for point in control_points:
@@ -130,15 +128,15 @@ class CubicSpline2D:
         self.xSpline.addControlPoints(x)
         self.ySpline.addControlPoints(y)
 
-    def _computeSegmentDuration(self, t_start, t_end):
-        total_time = t_end-t_start
+    def _computeSegmentDuration(self, control_points):
+        total_time = self.t_end-self.t_start
         dist = []
-        for i in range(len(self.control_points)-1):
-            dist.append(self._computeNorm(self.control_points[i], self.control_points[i+1]))
+        for i in range(len(control_points)-1):
+            dist.append(self._computeNorm(control_points[i], control_points[i+1]))
         total_dist = sum(dist)
         # Normalize distance w.r.t. the total distance and time
         segment_durations = [item*total_time/total_dist for item in dist]
-        durations = [t_start]
+        durations = [self.t_start]
         for segment_duration in segment_durations:
             durations.append(durations[-1] + segment_duration)
         return durations
@@ -155,6 +153,56 @@ class CubicSpline2D:
 
     def getNumberOfSegments(self):
         return self.xSpline.getSegments()
+
+class CubicSpline3D:
+    def __init__(self, t_start, t_end):
+        self.control_points = []
+        self.t_start = t_start
+        self.t_end = t_end
+
+    def addControlPoints(self, control_points):
+        durations = self._computeSegmentDuration(control_points)
+        x = []
+        y = []
+        z = []
+        for point in control_points:
+            x.append(point[0])
+            y.append(point[1])
+            z.append(point[2])
+        self.x_spline = CubicSpline(durations)
+        self.y_spline = CubicSpline(durations)
+        self.z_spline = CubicSpline(durations)
+        self.x_spline.addControlPoints(x)
+        self.y_spline.addControlPoints(y)
+        self.z_spline.addControlPoints(z)
+        return x, y, z
+
+    def _computeSegmentDuration(self, control_points):
+        total_time = self.t_end - self.t_start
+        dist = []
+        for i in range(len(control_points)-1):
+            dist.append(self._computeNorm(control_points[i], control_points[i+1]))
+        total_dist = sum(dist)
+        segment_durations = [item*total_time/total_dist for item in dist]
+        durations = [self.t_start]
+        for segment_duration in segment_durations:
+            durations.append(durations[-1] + segment_duration)
+        return durations
+
+    def _computeNorm(self, first, second):
+        x_dist = first[0] - second[0]
+        y_dist = first[1] - second[1]
+        z_dist = first[2] - second[2]
+        return math.sqrt(x_dist*x_dist + y_dist*y_dist + z_dist*z_dist)
+
+    def evaluate(self, segment):
+        tx, x = self.x_spline.evaluate(segment)
+        ty, y = self.y_spline.evaluate(segment)
+        tz, z = self.z_spline.evaluate(segment)
+        return x, y, z
+
+    def getNumberOfSegments(self):
+        return self.x_spline.getSegments()
 
 if __name__=='__main__':
     t_start = 0.0
@@ -196,18 +244,37 @@ if __name__=='__main__':
     plt.plot(duration, x_input, 'o')
     plt.show(block=False)
 
-    spline = CubicSpline2D(t_start, t_end)
-    spline.addControlPoints([[3.0, 1.0], [5.0, 4.0], [2.0, 6.25], [6.0, 0.0], [8.0, 2.0], [10.0, -5.0]])
+    xy_spline = CubicSpline2D(t_start, t_end)
+    xy_spline.addControlPoints([[3.0, 1.0], [5.0, 4.0], [2.0, 6.25], [6.0, 0.0], [8.0, 2.0], [10.0, -5.0]])
 
     x = []
     y = []
-    for i in range(spline.getNumberOfSegments()):
-        x_segment_values, y_segment_values = spline.evaluate(i)
+    for i in range(xy_spline.getNumberOfSegments()):
+        x_segment_values, y_segment_values = xy_spline.evaluate(i)
         x.extend(x_segment_values)
         y.extend(y_segment_values)
     plt.figure()
     plt.plot(x, y)
     plt.plot(x_input, y_input, 'x')
+    plt.show(block=False)
+
+    xyz_spline = CubicSpline3D(t_start, t_end)
+    x_input, y_input, z_input = xyz_spline.addControlPoints([[3.0, 1.0, 0.0], [5.0, 4.0, 2.0], [2.0, 6.25, 1.0], [6.0, 0.0, 2.0], [8.0, 2.0, 3.0], [10.0, -5.0, 1.0]])
+
+    x = []
+    y = []
+    z = []
+
+    for i in range(xyz_spline.getNumberOfSegments()):
+        x_segment_values, y_segment_values, z_segment_values = xyz_spline.evaluate(i)
+        x.extend(x_segment_values)
+        y.extend(y_segment_values)
+        z.extend(z_segment_values)
+
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot3D(x, y, z, 'gray')
+    ax.scatter3D(x_input, y_input, z_input)
     plt.show(block=False)
 
     plt.show()
