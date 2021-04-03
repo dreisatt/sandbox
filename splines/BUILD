@@ -19,16 +19,6 @@ py_binary(
 )
 
 py_binary(
-    name = "cubic_spline_functions",
-    srcs = ["cubic_spline_functions.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
-    deps = matplotlib_deps + [
-        requirement("scipy"),
-    ],
-)
-
-py_binary(
     name = "polynomial_spline",
     srcs = ["polynomial_spline.py"],
     python_version = "PY3",
@@ -48,12 +38,20 @@ py_binary(
     deps = matplotlib_deps,
 )
 
-py_binary(
+py_library(
     name = "cubic_spline",
     srcs = ["cubic_spline.py"],
-    python_version = "PY3",
     srcs_version = "PY3",
-    deps = matplotlib_deps + [
+    deps = [
+        requirement("numpy"),
         requirement("multipledispatch"),
     ]
+)
+
+py_binary(
+    name = "cubic_spline_runner",
+    srcs = ["cubic_spline_runner.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = matplotlib_deps + [":cubic_spline"],
 )
