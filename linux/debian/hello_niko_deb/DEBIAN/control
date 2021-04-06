@@ -1,10 +1,14 @@
-Package: helloNiko
-Version: 0.1
+Package: hello-niko-runner
+Version: 0.1-1
 Architecture: amd64
-Maintainer: dreisatt
+Maintainer: dreisatt <nreischl@protonmail.com>
 Installed-Size: 6
 Depends: gcc, libc6,libstdc++6
-Section: testing
+Section: misc
 Priority: optional
 Homepage: http://askubuntu.com
-Description: Simple debian package containing a hello-world executable. For testing and demonstration.
+Description: Hello Niko greeter
+ Simple debian package containing a hello-world
+ like executable printing: Hello Niko
+ For testing and demonstration of the debian
+ package mechanism.
