@@ -111,7 +111,7 @@ class CubicSpline:
             self.polynomials.append(CubicPolynomial(x[i][0], x[i][1], x[i][2], x[i][3], self.durations[i]))
 
 class CubicSpline2D:
-    def __init__(self, t_start, t_end):
+    def __init__(self, t_start=0.0, t_end=1.0):
         self.t_start = t_start
         self.t_end = t_end
 
@@ -154,7 +154,7 @@ class CubicSpline2D:
         return self.xSpline.getSegments()
 
 class CubicSpline3D:
-    def __init__(self, t_start, t_end):
+    def __init__(self, t_start=0.0, t_end=1.0):
         self.control_points = []
         self.t_start = t_start
         self.t_end = t_end
@@ -174,7 +174,6 @@ class CubicSpline3D:
         self.x_spline.addControlPoints(x)
         self.y_spline.addControlPoints(y)
         self.z_spline.addControlPoints(z)
-        return x, y, z
 
     def _computeSegmentDuration(self, control_points):
         total_time = self.t_end - self.t_start
@@ -226,10 +225,7 @@ def fitCubicPolynomialWithMoments(points):
             TriDiaMatrix[i][i] = 2
             TriDiaMatrix[i][i+1] = lambda_i
             d[i][0] = d_i
-#    print(TriDiaMatrix)
-#    print(d)
     moments = np.linalg.solve(TriDiaMatrix, d)
-#    print(moments)
     coefficients = []
     for i in range(0,n-1):
         a = points[i][1]
@@ -237,14 +233,13 @@ def fitCubicPolynomialWithMoments(points):
         b = (points[i+1][1]-points[i][1])/h_i - (2*moments[i]+moments[i+1])*h_i/6
         c = moments[i]/2
         d = (moments[i+1]-moments[i])/(6*h_i)
-        coeff = np.array([a, b, c, d, points[i][0]])
+        coeff = np.array([a, b, c, d, points[i][0]], dtype=object)
         coefficients.append(coeff)
     return coefficients
 
 def fitCubicPolynomial(points):
     # Number of polynomials
     n = len(points)-1
-    print(n)
     A = np.zeros(shape=(4*n, 4*n), dtype=float)
     b = np.zeros(shape=(4*n, 1), dtype=float)
 
@@ -292,11 +287,7 @@ def fitCubicPolynomial(points):
     A[2][3] = 6*(points[0][0]-points[0][0])
     A[3][(n-1)*4+2] = 2
     A[3][(n-1)*4+3] = 6*(points[n][0]-points[n-1][0])
-    print(A)
-    print(b)
-#    print(A.shape)
     x = np.linalg.solve(A, b)
-#    print(x)
     coeff = x.reshape(n,4)
     return coeff
 

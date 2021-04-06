@@ -1,18 +1,12 @@
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 import copy as cp
 
 class BezierSpline:
-
-    def __init__(self, start = None, end = None):
+    def __init__(self, start=0.0, end=1.0):
         self.control_points = []
-        if start is None and end is None:
-            self.start_time = 0.0
-            self.end_time = 1.0
-        else:
-            self.start_time = start
-            self.end_time = end
+        self.start_time = start
+        self.end_time = end
 
     def addControlPoint(self, point):
         self.control_points.append(point)
@@ -23,7 +17,7 @@ class BezierSpline:
     def getNumControlPoints(self):
         return len(self.control_points)
 
-    def convexCombination(self, t, x, y):
+    def _convexCombination(self, t, x, y):
         t = (t-self.start_time)/(self.end_time-self.start_time)
         return (1.0-t)*x + t*y
 
@@ -31,9 +25,9 @@ class BezierSpline:
         if t >= self.start_time and t <= self.end_time:
             list = cp.deepcopy(self.control_points)
             # de Casteljau's algorithm
-            for i in range(0, len(self.control_points)-1):
-                for r in range(0, len(list)-1):
-                    list[r] = self.convexCombination(t, list[r], list[r+1])
+            for i in range(len(self.control_points)-1):
+                for r in range(len(list)-1):
+                    list[r] = self._convexCombination(t, list[r], list[r+1])
                 del list[len(list)-1:]
             return list[0]
         else:
@@ -41,14 +35,13 @@ class BezierSpline:
             return 0.0
 
 class BezierSpline2D:
-
-    def __init__(self, start = None, end = None):
+    def __init__(self, start=0.0, end=1.0):
         self.x = BezierSpline(start, end)
         self.y = BezierSpline(start, end)
         self.control_points = []
 
     def addControlPoint(self, point):
-        if(point.shape[0] == 2):
+        if len(point) == 2:
             self.x.addControlPoint(point[0])
             self.y.addControlPoint(point[1])
             self.control_points.append(point)
@@ -56,42 +49,76 @@ class BezierSpline2D:
             raise TypeError("addControlPoint: control point does not have the proper dimension.")
 
     def addControlPoints(self, points):
-        for i in range(0, points.shape[0]):
-            self.x.addControlPoint(points[i][0])
-            self.y.addControlPoint(points[i][1])
-            self.control_points.append(points[i])
+        for point in points:
+            self.addControlPoint(point)
 
     def evaluate(self, t):
-        result = [self.x.evaluate(t), self.y.evaluate(t)]
-        return result
+        return [self.x.evaluate(t), self.y.evaluate(t)]
+
+class BezierSpline3D:
+    def __init__(self, start=0.0, end=1.0):
+        self.x = BezierSpline(start, end)
+        self.y = BezierSpline(start, end)
+        self.z = BezierSpline(start, end)
+        self.control_points = []
+
+    def addControlPoints(self, points):
+        for point in points:
+            self.addControlPoint(point)
+
+    def addControlPoint(self, point):
+        if len(point) == 3:
+            self.x.addControlPoint(point[0])
+            self.y.addControlPoint(point[1])
+            self.z.addControlPoint(point[2])
+            self.control_points.append(point)
+        else:
+            raise TypeError("addControlPoint: control point does not have the proper dimension.")
+
+
+    def evaluate(self, t):
+        return [self.x.evaluate(t), self.y.evaluate(t), self.z.evaluate(t)]
 
 if __name__ == "__main__":
-    spline2d = BezierSpline2D(0.0, 5.0)
-    spline2d_1 = BezierSpline2D()
-#    control_points = np.array([[0.0, 0.0], [1.0, 4.5], [4.0,2.25]])
-    control_points = np.array([[-8.0, 0.0], [-5.0, 4.0], [-1.0, -1.0], [0.0, 0.0], [1.0, 4.5], [4.0,2.25], [6.0, 0.1], [8.0, -5.0]])
-    spline2d.addControlPoints(control_points)
-    spline2d_1.addControlPoints(control_points)
-    times = np.linspace(0.0, 5.0, 100)
-    times_1 = np.linspace(0.0, 1.0, 100)
-    result = [spline2d.evaluate(t) for t in times]
-    result_1 = [spline2d_1.evaluate(t) for t in times_1]
-    ## Plot result
+    slow_spline2d = BezierSpline2D(0.0, 5.0)
+    fast_spline2d = BezierSpline2D()
+    control_points = [[-8.0, 0.0], [-5.0, 4.0], [-1.0, -1.0], [0.0, 0.0], [1.0, 4.5], [4.0,2.25], [6.0, 0.1], [8.0, -5.0]]
+    slow_spline2d.addControlPoints(control_points)
+    fast_spline2d.addControlPoints(control_points)
+    slow_times = np.linspace(0.0, 5.0, 100)
+    fast_times = np.linspace(0.0, 1.0, 100)
+    slow_spline_values = [slow_spline2d.evaluate(t) for t in slow_times]
+    fast_spline_values = [fast_spline2d.evaluate(t) for t in fast_times]
+
     plt.subplot(2, 1, 1)
-    plt.plot(control_points[:,0], control_points[:,1], 'ro')
-    plt.plot(*zip(*result), 'g')
-    plt.plot(*zip(*result_1), 'r')
+    plt.plot(*zip(*control_points), 'ro')
+    plt.plot(*zip(*slow_spline_values), 'g')
+    plt.plot(*zip(*fast_spline_values), 'r')
     plt.title('X-Y spline data')
     plt.axis([-10.0, 10.0, -10.0, 10.0])
     plt.subplot(2, 1, 2)
-    plt.plot(times_1, list(zip(*result_1))[0], 'r')
-    plt.plot(times, list(zip(*result))[0], 'g')
+    plt.plot(fast_times, list(zip(*fast_spline_values))[0], 'r')
+    plt.plot(slow_times, list(zip(*slow_spline_values))[0], 'g')
     plt.title('X-coordinate over time')
     plt.axis([0.0, 10.0, -10.0, 10.0])
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.plot(times, *zip(*result), label='slow sline curve')
-    ax.plot(times_1, *zip(*result_1), 'g', label='fast spline curve' )
+
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot3D(slow_times, *zip(*slow_spline_values), label='slow sline curve')
+    ax.plot3D(fast_times, *zip(*fast_spline_values), 'g', label='fast spline curve' )
     plt.title('Spline points over time')
     ax.legend(loc=3)
+    plt.show(block=False)
+
+    spline3d = BezierSpline3D()
+    control_points_3d = [[3.0, 1.0, 0.0], [5.0, 4.0, 2.0], [2.0, 6.25, 1.0], [6.0, 0.0, 2.0], [8.0, 2.0, 3.0], [10.0, -5.0, 1.0]]
+    spline3d.addControlPoints(control_points_3d)
+    spline3d_values = [spline3d.evaluate(t) for t in fast_times]
+
+    plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot3D(*zip(*spline3d_values), 'gray')
+    ax.scatter3D(*zip(*control_points_3d))
+    plt.show(block=False)
+
     plt.show()

@@ -95,7 +95,8 @@ if __name__=='__main__':
     plt.show(block=False)
 
     xyz_spline = CubicSpline3D(t_start, t_end)
-    x_input, y_input, z_input = xyz_spline.addControlPoints([[3.0, 1.0, 0.0], [5.0, 4.0, 2.0], [2.0, 6.25, 1.0], [6.0, 0.0, 2.0], [8.0, 2.0, 3.0], [10.0, -5.0, 1.0]])
+    xyz_control_points = [[3.0, 1.0, 0.0], [5.0, 4.0, 2.0], [2.0, 6.25, 1.0], [6.0, 0.0, 2.0], [8.0, 2.0, 3.0], [10.0, -5.0, 1.0]]
+    xyz_spline.addControlPoints(xyz_control_points)
 
     x = []
     y = []
@@ -110,7 +111,7 @@ if __name__=='__main__':
     plt.figure()
     ax = plt.axes(projection='3d')
     ax.plot3D(x, y, z, 'gray')
-    ax.scatter3D(x_input, y_input, z_input)
+    ax.scatter3D(*zip(*xyz_control_points))
     plt.show(block=False)
 
     plt.show()
