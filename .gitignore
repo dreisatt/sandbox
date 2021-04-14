@@ -10,3 +10,9 @@ yarn.lock
 yarn-error.log
 # Ignore Python cache
 __pycache__/
+pyvenv.cfg
+# Ignore binaries
+bin/
+lib/
+lib64
+share
