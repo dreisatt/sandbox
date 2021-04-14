@@ -1,7 +1,5 @@
 build:base --symlink_prefix=.bazel/
 
-build --config=base
-
 build:cpp_base --config=base
 build:cpp_base --cxxopt=-std=c++14
 build:cpp_base --cxxopt=-Wall
