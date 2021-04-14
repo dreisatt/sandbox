@@ -80,7 +80,7 @@ load("@rules_python//python:pip.bzl", "pip_import")
 
 pip_import(
     name = "mandelbrot_deps",
-    requirements = "//mandelbrot:requirements.txt",
+    requirements = "//algorithms/mandelbrot:requirements.txt",
 )
 
 pip_import(
