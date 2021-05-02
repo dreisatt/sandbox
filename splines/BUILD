@@ -46,6 +46,15 @@ py_binary(
     deps = matplotlib_deps,
 )
 
+py_binary(
+    name = "function_approximation_runner",
+    srcs = ["lookup_table.py"],
+    main = "lookup_table.py",
+    python_version = "PY3",
+    srcs_version = "PY3",
+    deps = matplotlib_deps,
+)
+
 py_library(
     name = "cubic_spline",
     srcs = ["cubic_spline.py"],

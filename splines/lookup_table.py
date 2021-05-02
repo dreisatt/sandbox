@@ -55,11 +55,11 @@ if __name__ == '__main__':
         error_sqrt = [exact-approx for exact, approx  in zip(sqrt_ys, approx_sqrt_ys)]
         error_log = [exact-approx for exact, approx in zip(log_ys, approx_log_ys)]
 
-        total_sqrt_error = 0.0
-        for element in error_sqrt:
-            total_sqrt_error = total_sqrt_error + abs(element)
-        total_sqrt_error = total_sqrt_error/len(error_sqrt)
-        print("Total error of sqrt approximation: ", total_sqrt_error)
+        total_sqrt_error = sum(map(abs, error_sqrt))/len(error_sqrt)
+        print("Total error of sqrt approximation (look-up table based): ", total_sqrt_error)
+
+        total_log_error = sum(map(abs, error_log))/len(error_log)
+        print("Total error of log approximation (interpolation based):", total_log_error)
 
         plt.figure()
         plt.plot(xs, sqrt_ys)
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
         plt.figure()
         plt.plot(xs, error_sqrt)
-        # plt.plot(xs, error_log)
+        plt.plot(xs, error_log)
         plt.show(block=False)
         plt.show()
     except RuntimeError as e:
